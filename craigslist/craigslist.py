@@ -2,9 +2,15 @@ import undetected_chromedriver as uc
 import random
 import time
 import csv
+import logging
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+
+logging.basicConfig(
+    level = logging.INFO,
+    format = "%(asctime)s  [%(levelname)s %(message)s]"
+)
 
 def scrape_craigslist_tutors():
     user_agents = [
@@ -21,7 +27,7 @@ def scrape_craigslist_tutors():
         driver.get(url)
         time.sleep(5)
 
-        # Определяем общее количество объявлений
+        # Find total number of listings in this category
         WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, "div.visible-counts span"))
         )
@@ -39,12 +45,12 @@ def scrape_craigslist_tutors():
                     continue
 
         if total is None:
-            print("❌ Не удалось найти общее количество объявлений.")
+            print("Error couldn't find total number of listings")
             for i, c in enumerate(counts):
                 print(f"{i}: '{c.text}'")
             return
 
-        print("💡 Total expected listings:", total)
+        print("Total number of listings:", total)
 
         last_count = 0
         scroll_pause = 2.5
