@@ -2,17 +2,12 @@ import undetected_chromedriver as uc
 import random
 import time
 import csv
-import logging
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from logger import logger
 
-logging.basicConfig(
-    level = logging.INFO,
-    format = "%(asctime)s  [%(levelname)s %(message)s]"
-)
-
-def scrape_craigslist_tutors():
+def scrape_craigslist():
     user_agents = [
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.112 Safari/537.36",
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15",
@@ -45,38 +40,21 @@ def scrape_craigslist_tutors():
                     continue
 
         if total is None:
-            print("Error couldn't find total number of listings")
+            logger.error("Couldn't find total number of listings")
+            # print("Error couldn't find total number of listings")
             for i, c in enumerate(counts):
                 print(f"{i}: '{c.text}'")
             return
 
-        print("Total number of listings:", total)
+        logger.info(f"Total number of listings: {total}")
+        # print("Total number of listings:", total)
 
-        last_count = 0
-        scroll_pause = 2.5
-
-        # Скроллим страницу до конца
-        while True:
-            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            time.sleep(scroll_pause)
-
-            listings = driver.find_elements(By.CSS_SELECTOR, "div[data-pid]")
-            print(f"📦 Currently loaded: {len(listings)}")
-
-            if len(listings) == last_count:
-                print("⚠️ No new listings loaded, stopping...")
-                break
-
-            if len(listings) >= total:
-                print("✅ Loaded all listings")
-                break
-
-            last_count = len(listings)
-
-        # Удаляем дубликаты по title и сохраняем
+        
         listings = driver.find_elements(By.CSS_SELECTOR, "div[data-pid]")
-        print(f"{len(listings)} listings found")
+        logger.info(f"{len(listings)} listings found")
+        # print(f"{len(listings)} listings found")
 
+        # Remove duplicates
         seen_titles = set()
         tutors = []
 
@@ -94,17 +72,22 @@ def scrape_craigslist_tutors():
                     "title": title,
                     "link": link
                 })
-            except:
+            except Exception as e:
+                logger.warning(f"Skipping a listing due to an error: {e}")
                 continue
 
-        # Сохраняем результат в CSV
-        with open("craigslist_tutors.csv", "w", newline="", encoding="utf-8") as f:
+        logger.info(f"{len(seen_titles)} unique listings found")
+        
+
+        # Save titles and link to craigslist_t_l.csv
+        with open("craigslist_t_l.csv", "w", newline="", encoding="utf-8") as f:
             fieldnames = ["title", "link"]
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
             writer.writerows(tutors)
 
-        print(f"✅ Saved {len(tutors)} unique listings to craigslist_tutors.csv")
+        logger.info(f"Saved {len(tutors)} unique listings to craigslist_t_l.csv")
+        # print(f"✅ Saved {len(tutors)} unique listings to craigslist_t_l.csv")
 
 if __name__ == "__main__":
-    scrape_craigslist_tutors()
+    scrape_craigslist()
