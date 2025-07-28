@@ -13,6 +13,10 @@ def get_logger(name=__name__):
     formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
     file_handler.setFormatter(formatter)
 
+     # Console handler (immediate flush)
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
+
     # Prevent duplicated log handlers
     if not logger.handlers:
         logger.addHandler(file_handler)

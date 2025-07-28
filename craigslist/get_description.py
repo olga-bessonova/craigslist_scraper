@@ -6,9 +6,11 @@ from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from craigslist.logger import get_logger
 
+logger = get_logger()
 
-def get_posting_body(driver, url):
+def get_postingbody(driver, url):
     try:
         driver.get(url)
         time.sleep(random.uniform(2, 4))  # Random delay for human-like behavior
@@ -22,13 +24,13 @@ def get_posting_body(driver, url):
         body_text = body_element.text.strip()
         return ' '.join(body_text.split())  # Remove excessive whitespace
     except (NoSuchElementException, TimeoutException) as e:
-        print(f"❌ Error getting postingbody from {url}: {e}")
+        logger.error(f"Couldn't get a postingbody from {url}: {e}")
         return "NOT FOUND"
 
 
-def add_postingbody_to_database():
-    input_file = "craigslist_tutors.csv"
-    output_file = "craigslist_tutors_with_descriptions.csv"
+def get_description():
+    input_file = "database/craigslist_t_l.csv"
+    output_file = "database/craigslist_t_l_d.csv"
 
     options = uc.ChromeOptions()
     options.headless = False
@@ -39,10 +41,10 @@ def add_postingbody_to_database():
             listings = list(reader)
 
         for i, row in enumerate(listings):
-            print(f"🔍 [{i+1}/{len(listings)}] Getting postingbody from: {row['link']}")
-            description = get_posting_body(driver, row['link'])
+            logger.info(f"[{i+1}/{len(listings)}] Getting postingbody from: {row['link']}")
+            description = get_postingbody(driver, row['link'])
             row['description'] = description
-            print(f"📝 Description length: {len(description)} chars")
+            logger.info(f"Description length: {len(description)} chars")
 
         with open(output_file, "w", newline="", encoding="utf-8") as f:
             fieldnames = ["title", "link", "description"]
@@ -50,8 +52,8 @@ def add_postingbody_to_database():
             writer.writeheader()
             writer.writerows(listings)
 
-    print(f"✅ Done. Descriptions saved to {output_file}")
+    logger.info(f"Done: descriptions saved to {output_file}")
 
 
 if __name__ == "__main__":
-    add_postingbody_to_database()
+    get_description()
