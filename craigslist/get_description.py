@@ -33,7 +33,7 @@ def get_description():
     output_file = "database/craigslist_t_l_d.csv"
 
     options = uc.ChromeOptions()
-    options.headless = False
+    options.headless = True
 
     with uc.Chrome(options=options) as driver:
         with open(input_file, newline='', encoding='utf-8') as f:
