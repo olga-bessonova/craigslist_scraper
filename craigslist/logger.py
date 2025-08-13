@@ -5,20 +5,28 @@ def get_logger(name=__name__):
     logger = logging.getLogger(name)
     logger.setLevel(logging.INFO)
 
-    # Create a handler to write into a file
+    # Avoid adding duplicate handlers
+    if logger.hasHandlers():
+        return logger
+
+    # Log file path
     log_dir = os.path.join(os.path.dirname(__file__), '..', 'output')
     os.makedirs(log_dir, exist_ok=True)
     log_file = os.path.join(log_dir, 'craigslist_scraper.log')
-    file_handler = logging.FileHandler(log_file, encoding='utf-8')
+
+    # Formatter
     formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+
+    # File handler
+    file_handler = logging.FileHandler(log_file, encoding='utf-8')
     file_handler.setFormatter(formatter)
 
-     # Console handler (immediate flush)
+    # Console handler
     console_handler = logging.StreamHandler()
-    console_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
+    console_handler.setFormatter(formatter)
 
-    # Prevent duplicated log handlers
-    if not logger.handlers:
-        logger.addHandler(file_handler)
+    # Add both handlers
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
 
     return logger

@@ -1,42 +1,71 @@
-import csv
-import datetime as dt
-import logging
-from craigslist.http_session import create_session, fetch_with_retry, delay, random_delay
-from craigslist.parse_listings import parse_listings
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+import csv, time, os
+from craigslist.get_listings import get_listings  
 from craigslist.logger import get_logger
 
 logger = get_logger()
 
-def scrape_craigslist(city: str = "newyork"):
+OUTFILE = "database/craigslist_title_link.csv"
+FIELDS = ["city", "title", "link"]
 
-    base_url = f"https://{city}.craigslist.org"
-    search_url = f"{base_url}/search/lss?cc=gb"
+def scrape_craigslist(city, base_url):
+    logger.info(f"Working on city: {city}, base_url: {base_url}") 
+    
+    options = Options()
+    options.add_argument("--headless=new")
+    driver = webdriver.Chrome(options=options)
 
-    logger.info(f"Navigating to: {search_url}")
+    all_rows = []
+    start = 0
+    while True:
+        url = f"{base_url}search/lss?s={start}"
+        logger.info(f"Fetching page: {url}")
+        driver.get(url)
+        time.sleep(2)  # small pause for JS
 
-    session = create_session()
+        listings_data = get_listings(driver.page_source, base_url)
+        if not listings_data:
+            break  # No more results
 
-    try:
-        html = fetch_with_retry(session, search_url)
-        delay(3000 + random_delay())  # optional wait after load
+        page_rows = [{"city": city, "title": t, "link": l} for t, l in listings_data]
+        all_rows.extend(page_rows)
 
-        listings = parse_listings(html, base_url)
-        logger.info(f"Found {len(listings)} unique listings")
+        # Craigslist usually shows ~120 per page, so jump to next
+        if len(listings_data) < 120:
+            break
+        start += 120
 
-        # Save titles and link to craigslist_t_l.csv
-        today = dt.date.today().isoformat()
-        filename = f"database/craigslist_t_l.csv"
-        with open(filename, "w", newline="", encoding="utf-8") as f:
-            fieldnames = ["title", "link"]
-            writer = csv.DictWriter(f, fieldnames=fieldnames)
+    driver.quit()
+
+    if not all_rows:
+        logger.info(f"No listings found for {city}")
+        return
+
+    os.makedirs(os.path.dirname(OUTFILE), exist_ok=True)
+    file_exists = os.path.exists(OUTFILE)
+    is_empty = (not file_exists) or os.path.getsize(OUTFILE) == 0
+
+    # Collect existing links to avoid duplicates
+    existing_links = set()
+    if file_exists and not is_empty:
+        with open(OUTFILE, newline="", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for r in reader:
+                existing_links.add((r.get("city", ""), r.get("link", "")))
+
+    # Filter out duplicates
+    new_rows = [r for r in all_rows if (r["city"], r["link"]) not in existing_links]
+
+    if not new_rows:
+        logger.info(f"No new listings for {city}")
+        return
+
+    # Append to CSV
+    with open(OUTFILE, "a", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=FIELDS)
+        if is_empty:
             writer.writeheader()
-            for title, link in listings:
-                writer.writerow({"title": title, "link": link})
+        writer.writerows(new_rows)
 
-        logger.info(f"Saved {len(listings)} unique listings to {filename}")
-
-    except Exception as e:
-        logger.error(f"Error while scraping: {e}")
-
-if __name__ == "__main__":
-    scrape_craigslist()
+    logger.info(f"Appended {len(new_rows)} listings for {city}")

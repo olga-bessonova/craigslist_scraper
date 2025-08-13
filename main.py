@@ -1,11 +1,16 @@
+import sys
 from craigslist.scrape_craigslist import scrape_craigslist
 from craigslist.get_description import get_description
 from craigslist.get_contact_info import get_contact_info
-import sys
+
+from craigslist.city_list import city_list 
+
 
 if __name__ == "__main__":
-    city = sys.argv[1] if len(sys.argv) > 1 else "charlotte"
-    scrape_craigslist(city)
+    # for city, base_url in city_list[241]:
+    city, base_url = city_list[241]
+    scrape_craigslist(city, base_url)
     get_description()
     get_contact_info()
+
 

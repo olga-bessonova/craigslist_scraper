@@ -5,10 +5,18 @@ Extracts titles, links, descriptions, email addresses, and phone numbers; saves 
 
 ---
 
+## Table of Contents
+
+- [Folder Structure](#folder-structure)
+- [Installation](#installation)
+- [How to Run](#how-to-run)
+- [HTTP Request Utility](#http-request-utility)
+- [Logging](#logging)
+- [To Do](#to-do)
+
 ## Features
 
-- Headless browsing with Selenium & **undetected‑chromedriver**  
-- Dynamic infinite scrolling to load *all* listings  
+- Headless browsing: uses a shared requests.Session() with randomized user-agent headers  
 - Eliminate duplicates by title  
 - Normalize and extract:
   - Emails (including obfuscated formats like `name (at) domain dot com`)
@@ -18,7 +26,7 @@ Extracts titles, links, descriptions, email addresses, and phone numbers; saves 
 
 ---
 
-## Project Layout
+## Folder Structure
 ![Screenshot](misc/structure.jpg)
 <!-- craigslist_scraper/
 │
@@ -41,13 +49,13 @@ Extracts titles, links, descriptions, email addresses, and phone numbers; saves 
 ├── requirements.txt ← Python dependencies
 └── README.md ← This file -->
 
-## Running this app
+## Installation
 - Clone the repository 
 ```
 git clone https://github.com/olga-bessonova/craigslist_scraper.git
 cd craigslist_scraper
 ```
-- Create and activate a virtualenv
+- Create and activate a virtual env
 ```
 python3 -m venv venv
 source venv/bin/activate
@@ -59,11 +67,29 @@ python main.py
 
 This runs:
 
-scrape_craigslist() → generates craigslist_t_l.csv
-get_description() → generates craigslist_t_l_d.csv
-get_contact_info() → final craigslist_t_l_d_contacts.csv
-## Logging
-- Logging handled centrally via craigslist/logger.py
-- Logs are written to output/craigslist_scraper.log
-- Use logger.info(), logger.warning(), logger.error() instead of print()
+scrape_craigslist() generates craigslist_t_l.csv
+get_description() generates craigslist_t_l_d.csv
+get_contact_info() final craigslist_t_l_d_contacts.csv
+
+# Logging
+- Logging handled centrally via craigslist/logger.py and doubled in the terminal
+
+
+## HTTP Request Utility
+- Session management: Uses a shared requests.
+- Session() with randomized user-agent headers
+- User-agent randomization: Pulls from a rotating list of user agents to simulate real browser traffic
+- Custom headers:	sends realistic headers like Accept, Connection, etc.
+- Supports SIGINT (Ctrl+C) to stop scraping mid-run cleanly
+- Retry logic: retries failed HTTP requests with exponential backoff + delay
+- Randomized delays: mimics human browsing behavior between requests (e.g., 2–5 seconds)
+- Timeouts: each request has a configurable timeout (default: 30s)
+
+### Core Functions
+- create_session() returns a requests.Session with randomized headers
+- fetch_with_retry(...) fetches a URL with retries and backoff
+- random_delay(...) sleep helper that introduces jitter between requests
+- delay(ms) synchronous millisecond-level sleep
+- get_random_user_agent() selects a random user-agent string
+- STOP_REQUESTED a global flag toggled by Ctrl+C to safely exit
 

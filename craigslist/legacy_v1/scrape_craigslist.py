@@ -6,7 +6,7 @@ import csv
 import os
 import datetime as dt
 from ..http_session import create_session, fetch_with_retry, delay, random_delay, STOP_REQUESTED
-from ..parse_listings import parse_listings
+from ..get_listings import parse_listings
 from .parse_body import parse_body
 from .extract_contact_info import extract_contact_info
 

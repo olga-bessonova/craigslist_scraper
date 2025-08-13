@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup
 import logging
-from .clean_text import clean_text
+from ..clean_text import clean_text
 
 logging.basicConfig(
     level=logging.INFO,

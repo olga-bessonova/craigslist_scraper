@@ -9,13 +9,6 @@ from craigslist.logger import get_logger
 logger = get_logger()
 
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(message)s",
-    datefmt="%H:%M:%S",
-)
-
-
 # SIGINT handler to stop between requests
 STOP_REQUESTED = False
 
