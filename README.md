@@ -14,6 +14,9 @@ Extracts titles, links, descriptions, email addresses, and phone numbers; saves 
 - [Logging](#logging)
 - [To Do](#to-do)
 
+## Installation
+pip install -r requirements.txt
+
 ## Features
 
 - Headless browsing: uses a shared requests.Session() with randomized user-agent headers  
